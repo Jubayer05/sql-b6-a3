@@ -53,7 +53,6 @@ Tracks rental bookings with relationships to users and vehicles.
 | `end_date`   | DATE           | NOT NULL                                                          |
 | `status`     | VARCHAR(20)    | CHECK (status IN ('completed', 'pending', 'confirmed')), NOT NULL |
 | `total_cost` | DECIMAL(10, 0) | NOT NULL, CHECK (total_cost > 0)                                  |
-|              |                | CHECK (end_date >= start_date)                                    |
 
 ### Relationships
 
