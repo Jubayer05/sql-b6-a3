@@ -66,10 +66,10 @@ This section documents all SQL queries implemented in the project, including pro
 
 ---
 
-### Query 1: Retrieve Booking Information with Customer and Vehicle Names
+### Query 1: JOIN - Retrieve Booking Information with Customer and Vehicle Names
 
-**Problem Statement**:  
-Retrieve booking information along with customer name and vehicle name for better readability.
+**Requirement**:  
+Retrieve booking information along with Customer name and Vehicle name.
 
 **Solution**:
 
@@ -87,8 +87,17 @@ FROM
   INNER JOIN vehicles as v ON b.vehicle_id = v.vehicle_id;
 ```
 
+**Expected Output**:
+
+| booking_id | customer_name | vehicle_name   | start_date | end_date   | status    |
+| ---------- | ------------- | -------------- | ---------- | ---------- | --------- |
+| 1          | Alice         | Honda Civic    | 2023-10-01 | 2023-10-05 | completed |
+| 2          | Alice         | Honda Civic    | 2023-11-01 | 2023-11-03 | completed |
+| 3          | Charlie       | Honda Civic    | 2023-12-01 | 2023-12-02 | confirmed |
+| 4          | Alice         | Toyota Corolla | 2023-12-10 | 2023-12-12 | pending   |
+
 **Explanation**:  
-This query performs an inner join across three tables to combine booking details with user and vehicle information. It retrieves the booking ID, customer name (from users table), vehicle name (from vehicles table), and booking dates and status.
+This query performs an inner join across three tables to combine booking details with user and vehicle information.
 
 **Key Concepts Used**:
 
@@ -98,10 +107,10 @@ This query performs an inner join across three tables to combine booking details
 
 ---
 
-### Query 2: Find All Vehicles That Have Never Been Booked
+### Query 2: EXISTS - Find All Vehicles That Have Never Been Booked
 
-**Problem Statement**:  
-Identify vehicles in the inventory that have never been rented (no booking records).
+**Requirement**:  
+Find all vehicles that have never been booked.
 
 **Solution**:
 
@@ -123,8 +132,15 @@ ORDER BY
   vehicle_id ASC;
 ```
 
+**Expected Output**:
+
+| vehicle_id | name       | type  | model | registration_number | rental_price | status      |
+| ---------- | ---------- | ----- | ----- | ------------------- | ------------ | ----------- |
+| 3          | Yamaha R15 | bike  | 2023  | GHI-789             | 30           | available   |
+| 4          | Ford F-150 | truck | 2020  | JKL-012             | 100          | maintenance |
+
 **Explanation**:  
-This query uses a `NOT EXISTS` subquery to filter vehicles that don't have any corresponding records in the bookings table. The subquery checks if there are any bookings for each vehicle, and the main query selects only those vehicles where no bookings exist.
+This query uses a `NOT EXISTS` subquery to filter vehicles that don't have any corresponding records in the bookings table.
 
 **Key Concepts Used**:
 
@@ -132,23 +148,12 @@ This query uses a `NOT EXISTS` subquery to filter vehicles that don't have any c
 - Correlated subquery (references outer query's `v.vehicle_id`)
 - `ORDER BY` clause for consistent result ordering
 
-**Alternative Approach**:  
-This could also be solved using a LEFT JOIN:
-
-```sql
-SELECT v.*
-FROM vehicles v
-LEFT JOIN bookings b ON v.vehicle_id = b.vehicle_id
-WHERE b.vehicle_id IS NULL
-ORDER BY v.vehicle_id ASC;
-```
-
 ---
 
-### Query 3: Retrieve All Available Vehicles of a Specific Type
+### Query 3: WHERE - Retrieve All Available Vehicles of a Specific Type
 
-**Problem Statement**:  
-Find all available vehicles of a specific type (e.g., cars) that can be rented.
+**Requirement**:  
+Retrieve all available vehicles of a specific type (e.g. cars).
 
 **Solution**:
 
@@ -162,8 +167,14 @@ WHERE
   AND v.type = 'car';
 ```
 
+**Expected Output**:
+
+| vehicle_id | name           | type | model | registration_number | rental_price | status    |
+| ---------- | -------------- | ---- | ----- | ------------------- | ------------ | --------- |
+| 1          | Toyota Corolla | car  | 2022  | ABC-123             | 50           | available |
+
 **Explanation**:  
-A straightforward filtering query that uses the `WHERE` clause to select vehicles matching both conditions: status must be 'available' and type must be 'car'. This helps users find rentable vehicles of their preferred type.
+This query uses the `WHERE` clause to filter vehicles with status 'available' and type 'car'.
 
 **Key Concepts Used**:
 
@@ -171,21 +182,19 @@ A straightforward filtering query that uses the `WHERE` clause to select vehicle
 - Using `AND` logical operator for multiple filter criteria
 - Direct equality comparison for filtering
 
-**Note**: To search for other vehicle types, simply change `'car'` to `'bike'` or `'truck'`.
-
 ---
 
-### Query 4: Find Vehicles with More Than 2 Bookings
+### Query 4: GROUP BY and HAVING - Find Vehicles with More Than 2 Bookings
 
-**Problem Statement**:  
-Calculate the total number of bookings for each vehicle and display only those vehicles that have more than 2 bookings.
+**Requirement**:  
+Find the total number of bookings for each vehicle and display only those vehicles that have more than 2 bookings.
 
 **Solution**:
 
 ```sql
 SELECT
-  v.name,
-  COUNT(b.vehicle_id) as booking_count
+  v.name as vehicle_name,
+  COUNT(b.vehicle_id) as total_bookings
 FROM
   bookings as b
   INNER JOIN vehicles as v ON v.vehicle_id = b.vehicle_id
@@ -195,8 +204,14 @@ HAVING
   COUNT(b.vehicle_id) > 2;
 ```
 
+**Expected Output**:
+
+| vehicle_name | total_bookings |
+| ------------ | -------------- |
+| Honda Civic  | 3              |
+
 **Explanation**:  
-This query uses aggregation to count bookings per vehicle. It joins the bookings and vehicles tables, groups by vehicle, counts the bookings for each vehicle, and filters using `HAVING` to show only vehicles with more than 2 bookings.
+This query uses aggregation to count bookings per vehicle. It joins the bookings and vehicles tables, groups by vehicle, and filters using `HAVING` to show only vehicles with more than 2 bookings.
 
 **Key Concepts Used**:
 
@@ -204,11 +219,7 @@ This query uses aggregation to count bookings per vehicle. It joins the bookings
 - `GROUP BY` clause to group results by vehicle
 - `HAVING` clause to filter aggregated results (cannot use `WHERE` with aggregate functions)
 - `INNER JOIN` to combine booking and vehicle data
-
-**Difference Between WHERE and HAVING**:
-
-- `WHERE` filters rows before aggregation
-- `HAVING` filters groups after aggregation
+- Column aliases (`vehicle_name`, `total_bookings`) for clearer output
 
 ---
 
@@ -233,25 +244,36 @@ This query uses aggregation to count bookings per vehicle. It joins the bookings
 
 ## Sample Data
 
-The database includes sample data for testing:
+The database includes the following sample data for testing:
 
-- **3 users** (2 customers, 1 admin)
-- **4 vehicles** (2 cars, 1 bike, 1 truck)
-- **4 bookings** with varying statuses and dates
+### Users Table
+
+| user_id | name    | email               | phone      | role     |
+| ------- | ------- | ------------------- | ---------- | -------- |
+| 1       | Alice   | alice@example.com   | 1234567890 | Customer |
+| 2       | Bob     | bob@example.com     | 0987654321 | Admin    |
+| 3       | Charlie | charlie@example.com | 1122334455 | Customer |
+
+### Vehicles Table
+
+| vehicle_id | name           | type  | model | registration_number | rental_price | status      |
+| ---------- | -------------- | ----- | ----- | ------------------- | ------------ | ----------- |
+| 1          | Toyota Corolla | car   | 2022  | ABC-123             | 50           | available   |
+| 2          | Honda Civic    | car   | 2021  | DEF-456             | 60           | rented      |
+| 3          | Yamaha R15     | bike  | 2023  | GHI-789             | 30           | available   |
+| 4          | Ford F-150     | truck | 2020  | JKL-012             | 100          | maintenance |
+
+### Bookings Table
+
+| booking_id | user_id | vehicle_id | start_date | end_date   | status    | total_cost |
+| ---------- | ------- | ---------- | ---------- | ---------- | --------- | ---------- |
+| 1          | 1       | 2          | 2023-10-01 | 2023-10-05 | completed | 240        |
+| 2          | 1       | 2          | 2023-11-01 | 2023-11-03 | completed | 120        |
+| 3          | 3       | 2          | 2023-12-01 | 2023-12-02 | confirmed | 60         |
+| 4          | 1       | 1          | 2023-12-10 | 2023-12-12 | pending   | 100        |
 
 ## Database Management Notes
 
 - **Cascade Deletion**: When a user is deleted, their bookings are automatically deleted (`ON DELETE CASCADE` on users foreign key)
 - **Restrict Deletion**: Vehicles with existing bookings cannot be deleted (`ON DELETE RESTRICT` on vehicles foreign key)
 - **Data Integrity**: Multiple CHECK constraints ensure data validity (valid roles, vehicle types, statuses, positive prices, etc.)
-
-## Future Enhancements
-
-Potential improvements for the system:
-
-- Add payment tracking
-- Implement user authentication
-- Add vehicle maintenance scheduling
-- Create views for common queries
-- Add indexes for performance optimization
-- Implement stored procedures for complex operations
